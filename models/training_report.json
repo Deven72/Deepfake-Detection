@@ -1,0 +1,20 @@
+{
+  "dataset": "UADFV",
+  "model_type": "experimental_frame_cnn",
+  "input_size": [
+    96,
+    96,
+    3
+  ],
+  "labels": {
+    "0": "real",
+    "1": "fake"
+  },
+  "training_videos": 78,
+  "validation_videos": 20,
+  "training_frames": 624,
+  "validation_frames": 153,
+  "validation_loss": 0.6939512491226196,
+  "validation_frame_accuracy": 0.5228758454322815,
+  "warning": "Small dataset; experimental frame-level baseline only. Validation frames are grouped by video, but frame accuracy is not a reliable production-level video detector metric."
+}

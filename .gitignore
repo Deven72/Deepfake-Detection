@@ -1,0 +1,62 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.env.*
+.pytest_cache/
+.mypy_cache/
+.DS_Store
+Thumbs.db
+*.log
+datasets/raw/
+datasets/processed/
+kaggle/
+
+
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+.Python
+
+# Virtual environments
+.venv/
+.venv313/
+venv/
+env/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+
+# Cache and logs
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.log
+
+# Datasets and extracted media
+datasets/
+data/
+*.mp4
+*.avi
+*.mov
+
+# Model checkpoints and large model files
+*.keras
+*.h5
+*.weights
+*.pt
+*.pth
+*.onnx
+
+# OS
+.DS_Store
+Thumbs.db

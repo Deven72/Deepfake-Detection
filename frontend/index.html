@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeepShield | Video Deepfake Risk Analysis</title>
+  <style>
+    :root{--bg:#080d19;--panel:#121c30;--line:#273653;--text:#edf3ff;--muted:#a8b7d2;--blue:#6ea8fe;--amber:#f4c46a}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#172846 0,#080d19 48%);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif}
+    header{padding:22px max(5%,calc((100% - 1120px)/2));border-bottom:1px solid var(--line);font-size:23px;font-weight:800;letter-spacing:.3px}
+    header span{color:var(--blue)}main{max-width:1120px;margin:38px auto;padding:0 20px 50px}
+    .hero{margin-bottom:24px}.hero h1{font-size:34px;margin:0 0 8px}.hero p,.muted{color:var(--muted);line-height:1.6}
+    .layout{display:grid;grid-template-columns:1fr 1fr;gap:18px}.panel{background:rgba(18,28,48,.96);border:1px solid var(--line);border-radius:16px;padding:24px;box-shadow:0 16px 45px #0003}
+    h2{font-size:20px;margin:0 0 10px}.hint{font-size:13px;color:var(--muted);line-height:1.5}
+    input[type=file]{display:block;width:100%;margin:22px 0;color:var(--muted)}
+    button{border:0;border-radius:9px;background:#3978f6;color:#fff;padding:12px 18px;font-weight:700;cursor:pointer}
+    button.secondary{background:#263a5b}button:disabled{opacity:.55;cursor:wait}.status{min-height:24px;color:var(--muted);margin-top:14px}
+    .progress{height:5px;background:#263653;border-radius:9px;overflow:hidden;display:none}.bar{height:100%;width:35%;background:var(--blue);animation:move 1.2s infinite}@keyframes move{from{transform:translateX(-120%)}to{transform:translateX(320%)}}
+    .result{margin-top:18px;display:none}.metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}
+    .metric{background:#eaf0fa;border-radius:10px;padding:13px;color:#122039;min-width:0}.metric small{display:block;color:#52617a;margin-bottom:7px}.metric strong{font-size:18px;overflow-wrap:anywhere}
+    .risk-LOW{color:#147a42}.risk-MEDIUM{color:#a36a00}.risk-HIGH{color:#c12b36}.warning{border-left:3px solid var(--amber);padding:10px 12px;background:#332a1b;color:#ffe1a5;font-size:13px;line-height:1.5;margin-top:15px}
+    video{width:100%;background:#05080e;border-radius:10px;margin:14px 0;max-height:300px;object-fit:contain}.live-actions{display:flex;gap:10px;flex-wrap:wrap}
+    @media(max-width:800px){.layout{grid-template-columns:1fr}.hero h1{font-size:28px}}
+  </style>
+</head>
+<body>
+<header><span>Deep</span>Shield</header>
+<main>
+  <section class="hero">
+    <h1>Video Deepfake Risk Analysis</h1>
+    <p>Analyze an uploaded video or run a controlled live-camera demonstration using the experimental UADFV MobileNetV2 model.</p>
+  </section>
+
+  <div class="layout">
+    <section class="panel">
+      <h2>1. Upload video</h2>
+      <p class="hint">Supported formats: MP4, MOV, AVI, MKV, WEBM. Maximum upload size: 200 MB.</p>
+      <form id="uploadForm">
+        <input id="videoFile" type="file" accept=".mp4,.mov,.avi,.mkv,.webm" required>
+        <button id="analyzeBtn" type="submit">Analyze video</button>
+      </form>
+      <div class="progress" id="progress"><div class="bar"></div></div>
+      <p class="status" id="uploadStatus" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="panel">
+      <h2>2. Live camera demonstration</h2>
+      <p class="hint">The browser sends one JPEG frame approximately every 1.2 seconds over WebSocket. This is not a complete WebRTC video-call system.</p>
+      <video id="camera" autoplay muted playsinline></video>
+      <canvas id="capture" hidden></canvas>
+      <div class="live-actions">
+        <button id="startLive">Start camera analysis</button>
+        <button id="stopLive" class="secondary" disabled>Stop</button>
+      </div>
+      <p class="status" id="liveStatus" role="status" aria-live="polite">Camera is stopped.</p>
+      <div id="liveResult" class="result">
+        <div class="metrics" id="liveMetrics"></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="panel result" id="uploadResult">
+    <h2>Video analysis results</h2>
+    <div class="metrics" id="uploadMetrics"></div>
+    <div class="warning" id="uploadWarning"></div>
+  </section>
+
+  <section class="warning" style="margin-top:18px">
+    Research prototype only: the included model has limited and inconsistent validation results. Its score is not calibrated proof that a video is real or fake. Do not use it as the sole basis for identity, security, employment, legal, or other high-impact decisions.
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+function metricCard(label, value, extraClass="") {
+  const card = document.createElement("div");
+  card.className = "metric";
+  const small = document.createElement("small");
+  small.textContent = label;
+  const strong = document.createElement("strong");
+  strong.textContent = value;
+  if (extraClass) strong.classList.add(extraClass);
+  card.append(small, strong);
+  return card;
+}
+
+function renderMetrics(target, items) {
+  target.replaceChildren(...items.map(item => metricCard(...item)));
+}
+
+function riskItems(data) {
+  const info = data.video_info || {};
+  const p = Number(data.deepfake_probability);
+  const pText = Number.isFinite(p) ? `${(p * 100).toFixed(2)}%` : "Unavailable";
+  const risk = data.risk_level || "UNKNOWN";
+  return [
+    ["Resolution", `${info.width ?? "N/A"} × ${info.height ?? "N/A"}`],
+    ["Duration", `${info.duration_seconds ?? "N/A"} sec`],
+    ["Frame rate", `${info.fps ?? "N/A"} FPS`],
+    ["Frames sampled", data.frames_sampled ?? "N/A"],
+    ["Frames with face", data.frames_with_face ?? "N/A"],
+    ["Face detections", data.faces_detected ?? "N/A"],
+    ["Faces preprocessed", data.faces_preprocessed ?? "N/A"],
+    ["AI frames", data.frames_analyzed_by_model ?? "N/A"],
+    ["Fake score", pText],
+    ["Heuristic risk", risk, `risk-${risk}`],
+    ["Model status", data.model_status ?? "unknown"],
+    ["Risk score", data.risk_score != null ? `${data.risk_score}/100` : "N/A"]
+  ];
+}
+
+$("uploadForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const file = $("videoFile").files[0];
+  if (!file) return;
+  if (file.size > 200 * 1024 * 1024) {
+    $("uploadStatus").textContent = "File exceeds the 200 MB limit.";
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", file);
+  $("analyzeBtn").disabled = true;
+  $("uploadResult").style.display = "none";
+  $("progress").style.display = "block";
+  $("uploadStatus").textContent = "Analyzing video…";
+
+  try {
+    const response = await fetch("/api/v1/detection/video", {method:"POST", body:formData});
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.detail || "Video analysis failed.");
+    if (!payload.success || !payload.data) throw new Error("Invalid API response.");
+    const result = payload.data;
+    renderMetrics($("uploadMetrics"), riskItems(result));
+    $("uploadWarning").textContent = result.risk_interpretation || result.message || "Experimental model output.";
+    $("uploadResult").style.display = "block";
+    $("uploadStatus").textContent = "Analysis completed.";
+  } catch (error) {
+    $("uploadStatus").textContent = `Error: ${error.message}`;
+  } finally {
+    $("analyzeBtn").disabled = false;
+    $("progress").style.display = "none";
+  }
+});
+
+let mediaStream = null;
+let liveSocket = null;
+let liveTimer = null;
+let sendingFrame = false;
+
+$("startLive").addEventListener("click", async () => {
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({
+      video: {width:{ideal:640}, height:{ideal:480}}, audio:false
+    });
+    $("camera").srcObject = mediaStream;
+    const wsProtocol = location.protocol === "https:" ? "wss:" : "ws:";
+    liveSocket = new WebSocket(`${wsProtocol}//${location.host}/ws/live-detection`);
+    liveSocket.binaryType = "arraybuffer";
+
+    liveSocket.onopen = () => {
+      $("liveStatus").textContent = "Connected. Sending camera frames…";
+      $("startLive").disabled = true;
+      $("stopLive").disabled = false;
+      liveTimer = setInterval(sendLiveFrame, 1200);
+    };
+    liveSocket.onmessage = (event) => {
+      const payload = JSON.parse(event.data);
+      if (!payload.success) {
+        $("liveStatus").textContent = `Live analysis error: ${payload.error}`;
+        return;
+      }
+      const data = payload.data;
+      const p = Number(data.deepfake_probability);
+      const risk = data.risk_level || "UNKNOWN";
+      renderMetrics($("liveMetrics"), [
+        ["Experimental fake score", Number.isFinite(p) ? `${(p*100).toFixed(2)}%` : "N/A"],
+        ["Heuristic risk", risk, `risk-${risk}`],
+        ["Faces detected", data.faces_detected ?? "N/A"],
+        ["Model status", data.model_status ?? "unknown"]
+      ]);
+      $("liveResult").style.display = "block";
+      $("liveStatus").textContent = data.message || "Frame analyzed.";
+    };
+    liveSocket.onerror = () => $("liveStatus").textContent = "WebSocket connection error.";
+    liveSocket.onclose = () => {
+      if ($("startLive").disabled) stopLive("Connection closed.");
+    };
+  } catch (error) {
+    stopLive(`Could not start camera: ${error.message}`);
+  }
+});
+
+function sendLiveFrame() {
+  if (!liveSocket || liveSocket.readyState !== WebSocket.OPEN || sendingFrame || liveSocket.bufferedAmount > 1024*1024) return;
+  const video = $("camera");
+  if (!video.videoWidth || !video.videoHeight) return;
+  sendingFrame = true;
+  const canvas = $("capture");
+  canvas.width = 640;
+  canvas.height = Math.round(640 * video.videoHeight / video.videoWidth);
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  canvas.toBlob(blob => {
+    if (blob && liveSocket && liveSocket.readyState === WebSocket.OPEN) {
+      blob.arrayBuffer().then(buffer => liveSocket.send(buffer)).finally(() => sendingFrame = false);
+    } else {
+      sendingFrame = false;
+    }
+  }, "image/jpeg", 0.75);
+}
+
+$("stopLive").addEventListener("click", () => stopLive("Camera analysis stopped."));
+
+function stopLive(message="Camera stopped.") {
+  if (liveTimer) clearInterval(liveTimer);
+  liveTimer = null;
+  if (liveSocket && liveSocket.readyState <= WebSocket.OPEN) liveSocket.close();
+  liveSocket = null;
+  if (mediaStream) mediaStream.getTracks().forEach(track => track.stop());
+  mediaStream = null;
+  $("camera").srcObject = null;
+  $("startLive").disabled = false;
+  $("stopLive").disabled = true;
+  $("liveStatus").textContent = message;
+  sendingFrame = false;
+}
+</script>
+</body>
+</html>

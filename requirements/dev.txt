@@ -1,0 +1,2 @@
+-r backend.txt
+pytest>=7.4

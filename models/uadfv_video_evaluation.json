@@ -1,0 +1,143 @@
+{
+  "threshold": 0.5,
+  "videos_evaluated": 20,
+  "metrics": {
+    "accuracy": 0.9,
+    "precision": 0.9,
+    "recall": 0.9,
+    "f1": 0.9,
+    "roc_auc": 0.9400000000000001
+  },
+  "confusion_matrix": [
+    [
+      9,
+      1
+    ],
+    [
+      1,
+      9
+    ]
+  ],
+  "video_predictions": [
+    {
+      "video": "0013",
+      "actual": 0,
+      "predicted": 0,
+      "fake_probability": 0.00923243910074234
+    },
+    {
+      "video": "0045",
+      "actual": 0,
+      "predicted": 0,
+      "fake_probability": 0.1244204193353653
+    },
+    {
+      "video": "0047",
+      "actual": 0,
+      "predicted": 0,
+      "fake_probability": 0.14385461807250977
+    },
+    {
+      "video": "0044",
+      "actual": 0,
+      "predicted": 0,
+      "fake_probability": 0.014399862848222256
+    },
+    {
+      "video": "0017",
+      "actual": 0,
+      "predicted": 0,
+      "fake_probability": 0.13273701071739197
+    },
+    {
+      "video": "0027",
+      "actual": 0,
+      "predicted": 1,
+      "fake_probability": 0.8806067705154419
+    },
+    {
+      "video": "0026",
+      "actual": 0,
+      "predicted": 0,
+      "fake_probability": 0.11230646073818207
+    },
+    {
+      "video": "0025",
+      "actual": 0,
+      "predicted": 0,
+      "fake_probability": 0.35491496324539185
+    },
+    {
+      "video": "0031",
+      "actual": 0,
+      "predicted": 0,
+      "fake_probability": 0.24862121045589447
+    },
+    {
+      "video": "0019",
+      "actual": 0,
+      "predicted": 0,
+      "fake_probability": 0.3198033571243286
+    },
+    {
+      "video": "0013_fake",
+      "actual": 1,
+      "predicted": 1,
+      "fake_probability": 0.5042582154273987
+    },
+    {
+      "video": "0045_fake",
+      "actual": 1,
+      "predicted": 1,
+      "fake_probability": 0.8645237684249878
+    },
+    {
+      "video": "0047_fake",
+      "actual": 1,
+      "predicted": 1,
+      "fake_probability": 0.9715667963027954
+    },
+    {
+      "video": "0044_fake",
+      "actual": 1,
+      "predicted": 1,
+      "fake_probability": 0.8501753211021423
+    },
+    {
+      "video": "0017_fake",
+      "actual": 1,
+      "predicted": 1,
+      "fake_probability": 0.6265943050384521
+    },
+    {
+      "video": "0027_fake",
+      "actual": 1,
+      "predicted": 1,
+      "fake_probability": 0.9970555305480957
+    },
+    {
+      "video": "0026_fake",
+      "actual": 1,
+      "predicted": 0,
+      "fake_probability": 0.46021223068237305
+    },
+    {
+      "video": "0025_fake",
+      "actual": 1,
+      "predicted": 1,
+      "fake_probability": 0.9605164527893066
+    },
+    {
+      "video": "0031_fake",
+      "actual": 1,
+      "predicted": 1,
+      "fake_probability": 0.8473231792449951
+    },
+    {
+      "video": "0019_fake",
+      "actual": 1,
+      "predicted": 1,
+      "fake_probability": 0.9506704807281494
+    }
+  ]
+}
