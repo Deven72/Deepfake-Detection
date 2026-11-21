@@ -1,0 +1,29 @@
+{
+    "project": "DeepShield",
+    "model_name": "MobileNetV2",
+    "architecture": "MobileNetV2 + GlobalAveragePooling2D + Dropout + Dense",
+    "input_shape": [
+        224,
+        224,
+        3
+    ],
+    "preprocessing": "mobilenet_v2.preprocess_input",
+    "input_range": [
+        -1,
+        1
+    ],
+    "class_mapping": {
+        "REAL": 0,
+        "FAKE": 1
+    },
+    "prediction_threshold": 0.5,
+    "dataset": "FaceForensics++ c23",
+    "training_images": 2240,
+    "validation_images": 480,
+    "test_images": 480,
+    "test_accuracy": 0.6667,
+    "test_auc": 0.7303,
+    "test_precision": 0.6923,
+    "test_recall": 0.6,
+    "test_f1": 0.6429
+}

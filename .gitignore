@@ -60,3 +60,6 @@ data/
 # OS
 .DS_Store
 Thumbs.db
+
+ffpp_extracted_frames.zip
+ffpp_original_videos.zip
